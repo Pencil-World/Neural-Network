@@ -9,9 +9,14 @@ private:
 	Output output;
 	vector<Layer> hidden;
 	const int NumLayers;
+
+	random_device rd;
+	mt19937 rng;
+	uniform_real_distribution<> probability;
+	normal_distribution<> dist;
 public:
 	// Model is a list of the number of nodes in each layer. Input layer (layer 0) is included. 
-	NN(vector<int> const& _model) : NumLayers(_model.size()), input(Input(_model.front())), output(Output(_model.back())) {
+	NN(vector<int> const& _model) : rng(rd()), probability(0, 1), NumLayers(_model.size()), input(Input(_model.front())), output(Output(_model.back())) {
 		transform(begin(_model) + 1, end(_model) - 1, back_inserter(hidden), [](int num) { return Layer(num); });
 		Layer* prev = &input;
 		for (auto& item : hidden) {
