@@ -13,18 +13,20 @@ private:
 	random_device rd;
 	mt19937 rng;
 	uniform_real_distribution<> probability;
-	normal_distribution<> dist;
 public:
 	// Model is a list of the number of nodes in each layer. Input layer (layer 0) is included. 
 	NN(vector<int> const& _model) : rng(rd()), probability(0, 1), NumLayers(_model.size()), input(Input(_model.front())), output(Output(_model.back())) {
+		function<double(int, int)> kaiming_initialization([this](int fan_in, int fan_out) { normal_distribution<> dist(0, sqrt(2 / fan_in)); return dist(rng); });
+		function<double(int, int)> xavier_initialization([this](int fan_in, int fan_out) { normal_distribution<> dist(0, sqrt(2 / (fan_in + fan_out))); return dist(rng); });
+
 		transform(begin(_model) + 1, end(_model) - 1, back_inserter(hidden), [](int num) { return Layer(num); });
 		Layer* prev = &input;
 		for (auto& item : hidden) {
-			item.assign(prev);
+			item.assign(prev, kaiming_initialization);
 			prev = &item;
 		}
 
-		output.assign(prev);
+		output.assign(prev, xavier_initialization);z
 	}
 
 	double ForwardPropagation(vector<double> const& _input) {

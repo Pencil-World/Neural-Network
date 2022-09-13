@@ -50,7 +50,7 @@ public:
 	Layer(int _NumNeurons) : NumNeurons(_NumNeurons) {}
 
 	//random weight generation prevents all nodes from a given layer from being identical
-	void assign(Layer* _PrevLayer) {
+	void assign(Layer* _PrevLayer, function<double(int, int)> _initialization) {
 		PrevLayer = _PrevLayer;
 		PrevLayer->NextLayer = this;
 		NumFeatures = PrevLayer->NumNeurons;
@@ -59,12 +59,8 @@ public:
 		B = Z = A = vector<double>(NumNeurons, 0);
 		reset();
 
-		// Kaiming He initialization
-		random_device rd;
-		mt19937 rng{ rd() };
-		normal_distribution<> dist(0, sqrt(2/NumFeatures));
 		for (auto& item : W)
-			ranges::generate(item, [&dist, &rng]() { return dist(rng); });
+			ranges::generate(item, [&_initialization, this]() { return _initialization(NumFeatures, NumNeurons); });
 	}
 
 	virtual void ForwardPropagation(vector<double> const& input) {
