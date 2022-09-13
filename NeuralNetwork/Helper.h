@@ -71,6 +71,6 @@ vector<vector<double>> transpose(vector<vector<double>> const& matrix) {
 	vector<vector<double>> temp(row, vector<double>(col));
 	while (--row >= 0)
 		for (int num = col; --num >= 0;)
-			temp[row][col] = matrix[col][row];
+			temp[row][num] = matrix[num][row];
 	return temp;
 }

@@ -9,6 +9,7 @@
 #include<string>
 #include<tuple>
 #include<vector>
+#include <iomanip>
 
 #include"NN.h"
 #include"Helper.h"
@@ -30,6 +31,7 @@ double loss(double output, double target) {
 // transform parameters are arranged in anti-ocd order. pushes weights and biases towards to lowest cost by comparing derivative and calculating the steepest slope
 double Train(NN& nn, vector<pair<vector<double>, int>>& train_set) {
 	double cost = 0;
+	cout << "\nstart training\n";
 	for (auto const& coord : train_set) {
 		double output = nn.ForwardPropagation(coord.first);
 		double target = coord.second;
@@ -42,6 +44,7 @@ double Train(NN& nn, vector<pair<vector<double>, int>>& train_set) {
 }
 
 void LoadData(vector<pair<vector<double>, int>>& data) {
+	cout << "\nLoadData\n";
 	fstream file("C://Users//iayfn//source//repos//Neural Network//NeuralNetwork//data.txt");
 	int output;
 	file >> DataWidth;
@@ -57,6 +60,7 @@ void LoadData(vector<pair<vector<double>, int>>& data) {
 
 // feature engineering & feature selection to prevent underfitting
 void ZScoreNormalization(vector<pair<vector<double>, int>>& data) {
+	cout << "\nZScoreNormalization\n";
 	vector<double> mean, variance, std;
 	mean = (1.0 / DataLength) * accumulate(begin(data), end(data), vector<double>(DataWidth, 0), [](auto const& total, auto const& coord) { return total + coord.first; });
 	variance = (1.0 / DataLength) * accumulate(begin(data), end(data), vector<double>(DataWidth, 0), [&mean](auto const& total, auto const& coord) { auto val = coord.first - mean; return total + val * val; });
@@ -65,16 +69,18 @@ void ZScoreNormalization(vector<pair<vector<double>, int>>& data) {
 }
 
 int main() {
+	cout << fixed << setprecision(4) << "\nstart program\n";
 	const auto start = chrono::system_clock::now();
 	vector<pair<vector<double>, int>> data;
 	LoadData(data);
 	DataLength = data.size();
 	ZScoreNormalization(data);
 
+	cout << "\nsplit data\n";
 	// split. train = 60%, cross_validation = 20%, test = 20%
-	vector<pair<vector<double>, int>> train_set = vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.0, begin(data) + DataLength * 0.6);
-	vector<pair<vector<double>, int>> cross_validation_set = vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.6, begin(data) + DataLength * 0.8);
-	vector<pair<vector<double>, int>> test_set = vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.8, begin(data) + DataLength * 1.0);
+	vector<pair<vector<double>, int>> train_set =				vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.0, begin(data) + DataLength * 0.6);
+	vector<pair<vector<double>, int>> cross_validation_set =	vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.6, begin(data) + DataLength * 0.8);
+	vector<pair<vector<double>, int>> test_set =				vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.8, begin(data) + DataLength * 1.0);
 
 	DataLength = train_set.size();
 	const double LearningRate = 0.05; // start between 0.1 - 0.01. 
@@ -83,9 +89,12 @@ int main() {
 
 	NN nn({ DataWidth, 5, 3, 1 });
 	// cost approaches an asymptote, never reaching zero. each iteration reduces cost because linear regression & mean squared error create a convex cost function
-	for (double cost = 0, costPrev = 0; !costPrev || cost < costPrev;) {
-		costPrev = cost;
-		cost = Train(nn, train_set);
+	for (int it = 0; ; ++it) {
+		double cost = Train(nn, train_set);
+		if (it % 1000 == 0) {
+			const std::chrono::duration<double> diff = chrono::system_clock::now() - start;
+			cout << diff.count() << '\t' << cost << endl;
+		}
 	}
 
 	const std::chrono::duration<double> diff = chrono::system_clock::now() - start;

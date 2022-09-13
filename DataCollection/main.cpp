@@ -29,7 +29,7 @@ int main() {
             file.seekp(0, ios_base::end);
         }
 
-        generate(begin(in), end(in), [&rng, &dist, &file]() { double num = dist(rng); file << num << " "; return num; });
+        generate(begin(in), end(in), [&]() { double num = dist(rng); file << num << " "; return num; });
         file << f(in) << endl;
     }
 
