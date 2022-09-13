@@ -92,12 +92,12 @@ public:
 		d_B = d_B + delta;
 
 		cout << "\nstarting backward propagation of " << NumNeurons << " neuron layer\n";
-		cout << "activation_derivative matrix: ";
+		vector<vector<double>> d_W_T(transpose(W));
+		cout << "A_der matrix: ";
 		print(activation_derivative);
 		cout << "delta matrix: ";
 		print(delta);
-		cout << "d_W matrix: ";
-		ranges::for_each(d_W, [this](vector<double> const& temp) { print(temp); });
+		ranges::for_each(d_W_T, [this](vector<double> const& temp) { cout << "d_W matrix: "; print(temp); });
 		cout << "d_B matrix: ";
 		print(d_B);
 
