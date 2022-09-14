@@ -28,6 +28,8 @@ double loss(double output, double target) {
 	return pow(output - target, 2);
 }
 
+//logistic loss
+
 // transform parameters are arranged in anti-ocd order. pushes weights and biases towards to lowest cost by comparing derivative and calculating the steepest slope
 double Train(NN& nn, vector<pair<vector<double>, int>>& train_set) {
 	double cost = 0;
