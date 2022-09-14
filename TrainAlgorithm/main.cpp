@@ -83,7 +83,7 @@ int main() {
 	vector<pair<vector<double>, int>> test_set =				vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.8, begin(data) + DataLength * 1.0);
 
 	DataLength = train_set.size();
-	const double LearningRate = 0.05; // start between 0.1 - 0.01. 
+	const double LearningRate = 0.01; // start between 0.1 - 0.01. 
 	alpha = LearningRate / DataLength;
 	// lambda = 
 
@@ -93,7 +93,7 @@ int main() {
 		double cost = Train(nn, train_set);
 		if (it % 1000 == 0) {
 			const std::chrono::duration<double> diff = chrono::system_clock::now() - start;
-			cout << diff.count() << '\t' << cost << endl;
+			cout << endl << diff.count() << '\t' << cost << endl;
 		}
 	}
 

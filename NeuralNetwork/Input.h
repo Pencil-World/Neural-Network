@@ -8,7 +8,8 @@ public:
 	Input(int _NumNeurons) : Layer(_NumNeurons) {}
 
 	void ForwardPropagation(vector<double> const& input) {
-		NextLayer->ForwardPropagation(input);
+		A = input;
+		NextLayer->ForwardPropagation(A);
 	}
 
 	void BackPropoagation(vector<double>& delta) {}
