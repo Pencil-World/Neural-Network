@@ -5,7 +5,7 @@ class Input :
 	public Layer
 {
 public:
-	Input(int _NumNeurons) : Layer(_NumNeurons) {}
+	using Layer::Layer;
 
 	void ForwardPropagation(vector<double> const& input) {
 		A = input;

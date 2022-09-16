@@ -26,7 +26,7 @@ double relu(double z) {
 }
 
 double relu_prime(double z) {
-	return !signbit(z);
+	return 0 < z;
 }
 
 void print(vector<double> const& temp) {
@@ -40,9 +40,13 @@ class Layer {
 	friend class Input;
 	friend class Output;
 private:
+	double alpha;
+	function<bool()> lambda;
+
 	int NumNeurons{ 0 }, NumFeatures{ 0 };
 	Layer* PrevLayer{ nullptr };
 	Layer* NextLayer{ nullptr };
+
 	vector<vector<double>> W, d_W;
 	vector<double> B, Z, A, d_B;
 
@@ -50,33 +54,15 @@ private:
 		d_W = vector<vector<double>>(NumNeurons, vector<double>(NumFeatures));
 		d_B = vector<double>(NumNeurons);
 	}
-
-	void printForwardPropagation() {
-		cout << "\nstarting forward propagation of " << NumNeurons << " neuron layer\n";
-		vector<vector<double>> W_T(transpose(W));
-		ranges::for_each(W_T, [this](vector<double> const& temp) { cout << "W matrix: "; print(temp); });
-		cout << "B matrix: ";
-		print(B);
-		cout << "Z matrix: ";
-		print(Z);
-		cout << "A matrix: ";
-		print(A);
-	}
-
-	void printBackPropagation() {
-		cout << "\nstarting backward propagation of " << NumNeurons << " neuron layer\n";
-		vector<vector<double>> d_W_T(transpose(d_W));
-		ranges::for_each(d_W_T, [this](vector<double> const& temp) { cout << "d_W matrix: "; print(temp); });
-		cout << "d_B matrix: ";
-		print(d_B);
-	}
 public:
 	// NumWeights comes before NumNeurons because NumWeights corresponds to the # of inputs, x, while NumNeurons corresponds to the # of outputs, activation
 	Layer(int _NumNeurons) : NumNeurons(_NumNeurons) {}
 
 	//random weight generation prevents all nodes from a given layer from being identical
-	void assign(Layer* _PrevLayer, function<double(int, int)> _initialization) {
-		cout << NumNeurons << " neuron layer PrevLayer = " << _PrevLayer->NumNeurons << " neuron layer\n";
+	void assign(double _alpha, function<bool()> _lambda, Layer* _PrevLayer, function<double(int, int)> _initialization) {
+		alpha = _alpha;
+		lambda = _lambda;
+
 		PrevLayer = _PrevLayer;
 		PrevLayer->NextLayer = this;
 		NumFeatures = PrevLayer->NumNeurons;
@@ -89,8 +75,6 @@ public:
 	virtual void ForwardPropagation(vector<double> const& input) {
 		transform(begin(W), end(W), begin(B), begin(Z), [&input](vector<double> const& w, double b) { return f(w, b, input); });
 		transform(begin(Z), end(Z), begin(A), [](double z) { return relu(z); });
-
-		printForwardPropagation();
 		NextLayer->ForwardPropagation(A);
 	}
 
@@ -102,16 +86,10 @@ public:
 		d_W = d_W + matmul(delta, PrevLayer->A);
 		d_B = d_B + delta;
 
-		printBackPropagation();
-		cout << "A_der matrix: ";
-		print(activation_derivative);
-		cout << "delta matrix: ";
-		print(delta);
-
 		PrevLayer->BackPropoagation(delta);
 	}
 
-	void GradientDescent(double alpha, double lambda) {
+	void GradientDescent() {
 		W = W - alpha * d_W;
 		B = B - alpha * d_B;
 		reset();

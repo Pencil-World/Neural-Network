@@ -19,30 +19,35 @@
 using namespace std;
 
 int DataLength, DataWidth;
-double alpha, lambda; // alpha accounts for learning rate and low alpha reduces underfitting. lambda accounts for regularization and high lambda reduces overfitting
-
+// alpha accounts for learning rate and low alpha reduces underfitting. lambda accounts for dropout probability and high lambda reduces overfitting
 // logistic regression calculates probability for 2 classes (1 or 0). accepts multiple inputs and computes them into different features (x => x^2, x, log x)
 // this example uses f(x) = x1^2 + x1 + x2^3 + x2 + b
 
-double loss(double output, double target) {
+double MSE_loss(double output, double target) {
 	return pow(output - target, 2);
 }
 
-//logistic loss
+double logistic_loss(double output, double target) {
+	return (target - 1) * log(1 - output) - target * log(output);
+}
 
 // transform parameters are arranged in anti-ocd order. pushes weights and biases towards to lowest cost by comparing derivative and calculating the steepest slope
-double Train(NN& nn, vector<pair<vector<double>, int>>& train_set) {
-	double cost = 0;
-	cout << "\nstart training\n";
+void Train(NN& nn, vector<pair<vector<double>, int>>& train_set, bool ProgressReport = false) {
+	double cost(0), accuracy(0);
 	for (auto const& coord : train_set) {
 		double output = nn.ForwardPropagation(coord.first);
 		double target = coord.second;
 		nn.BackPropagation(output, target);
-		cost += loss(output, target);
+
+		if (ProgressReport) {
+			cost += logistic_loss(output, target);
+			accuracy += abs(output - target) < 0.5;
+		}
 	}
 
-	nn.GradientDescent(alpha, lambda);
-	return cost / DataLength;
+	nn.GradientDescent();
+	if (ProgressReport)
+		cout << cost / DataLength << '\t' << 100 * accuracy / DataLength;
 }
 
 void LoadData(vector<pair<vector<double>, int>>& data) {
@@ -71,31 +76,30 @@ void ZScoreNormalization(vector<pair<vector<double>, int>>& data) {
 }
 
 int main() {
-	cout << fixed << setprecision(4) << "\nstart program\n";
+	cout << fixed << setprecision(4) << "\nStart Program\n";
 	const auto start = chrono::system_clock::now();
 	vector<pair<vector<double>, int>> data;
 	LoadData(data);
 	DataLength = data.size();
 	ZScoreNormalization(data);
 
-	cout << "\nsplit data\n";
-	// split. train = 60%, cross_validation = 20%, test = 20%
+	// split data sets. train = 60%, cross_validation = 20%, test = 20%
 	vector<pair<vector<double>, int>> train_set =				vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.0, begin(data) + DataLength * 0.6);
 	vector<pair<vector<double>, int>> cross_validation_set =	vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.6, begin(data) + DataLength * 0.8);
 	vector<pair<vector<double>, int>> test_set =				vector<pair<vector<double>, int>>(begin(data) + DataLength * 0.8, begin(data) + DataLength * 1.0);
 
 	DataLength = train_set.size();
 	const double LearningRate = 0.01; // start between 0.1 - 0.01. 
-	alpha = LearningRate / DataLength;
-	// lambda = 
+	const double DropoutRate = 0;
 
-	NN nn({ DataWidth, 5, 3, 1 });
+	NN nn(LearningRate / DataLength, DropoutRate, { DataWidth, 5, 3, 1 });
 	// cost approaches an asymptote, never reaching zero. each iteration reduces cost because linear regression & mean squared error create a convex cost function
-	for (int it = 0; ; ++it) {
-		double cost = Train(nn, train_set);
-		if (it % 1000 == 0) {
+	for (int epoch = 0; ; ++epoch) {
+		Train(nn, train_set);
+		if (epoch % 500 == 0) {
 			const std::chrono::duration<double> diff = chrono::system_clock::now() - start;
-			cout << endl << diff.count() << '\t' << cost << endl;
+			cout << endl << diff.count() << '\t';
+			Train(nn, train_set, true);
 		}
 	}
 
